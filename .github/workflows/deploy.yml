@@ -45,6 +45,8 @@ jobs:
           else
             git add course-content
             git commit -m "chore: sync submodule to course-content/$TARGET [skip ci]"
+            # Unset SSH override so git push uses GITHUB_TOKEN (set by actions/checkout)
+            unset GIT_SSH_COMMAND
             git push
           fi
 
