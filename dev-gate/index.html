@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Preview</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#070b14;font-family:'system-ui',sans-serif;color:#e8edf7}
+  .box{display:flex;flex-direction:column;gap:16px;width:320px}
+  label{font-size:14px;color:#94a3b8}
+  input{padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#e8edf7;font-size:15px;width:100%;outline:none}
+  input:focus{border-color:#3b82f6}
+  button{padding:10px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-size:15px;cursor:pointer}
+  button:hover{background:#2563eb}
+  .err{font-size:13px;color:#f87171;display:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <label>Dev Preview 密碼</label>
+  <input id="pw" type="password" placeholder="輸入密碼" autofocus>
+  <button onclick="check()">進入</button>
+  <span class="err" id="err">密碼錯誤</span>
+</div>
+<script>
+  document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')check()});
+  function check(){
+    var v=document.getElementById('pw').value;
+    if(btoa(v)===btoa('Tutor@2026')){
+      sessionStorage.setItem('dev_auth',btoa('Tutor@2026'));
+      location.replace('../dev/');
+    } else {
+      document.getElementById('err').style.display='block';
+    }
+  }
+</script>
+</body>
+</html>
