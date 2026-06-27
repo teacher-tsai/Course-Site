@@ -21,8 +21,6 @@ jobs:
       - name: Write clasp credentials
         run: echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
 
-      - name: Push and deploy
+      - name: Push
         working-directory: booking
-        run: |
-          clasp push --force
-          clasp deploy --deploymentId ${{ secrets.GAS_DEPLOYMENT_ID }} --description "Auto-deploy from GitHub Actions (${GITHUB_SHA::7})"
+        run: clasp push --force
