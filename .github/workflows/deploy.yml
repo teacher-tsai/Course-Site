@@ -3,32 +3,12 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master, dev]
-  pull_request:
-    branches: [master]
 
 permissions:
   contents: write
 
 jobs:
-  tested-on-dev:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check commit exists in dev branch
-        run: |
-          git fetch origin dev
-          if git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} origin/dev; then
-            echo "Commit has been tested on dev branch"
-          else
-            echo "This commit has not been merged into dev yet"
-            exit 1
-          fi
-
   submodule-check:
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +21,14 @@ jobs:
           test -f course-content/en.json && test -f course-content/zh.json
 
   test-on-dev:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - name: Confirm commit is on dev branch
         run: echo "OK"
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +44,7 @@ jobs:
           keep_files: true
 
   deploy-dev:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

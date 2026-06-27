@@ -1,0 +1,34 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  tested-on-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit exists in dev branch
+        run: |
+          git fetch origin dev
+          if git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} origin/dev; then
+            echo "Commit has been tested on dev branch"
+          else
+            echo "This commit has not been merged into dev yet"
+            exit 1
+          fi
+
+  submodule-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
+      - name: Verify submodule
+        run: |
+          git submodule status
+          test -f course-content/en.json && test -f course-content/zh.json
