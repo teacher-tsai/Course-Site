@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課程預約</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#070b14;color:#e8edf7;font-family:'Noto Sans TC','Space Grotesk',sans-serif;min-height:100vh}
+::selection{background:rgba(34,211,238,.3)}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(7,11,20,.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:#e8edf7}
+.nav-logo-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#22d3ee);font-family:'JetBrains Mono',monospace;font-weight:700;color:#06121f;font-size:18px}
+.nav-logo-text{font-weight:700;font-size:16px;letter-spacing:.3px}
+.nav-back{display:flex;align-items:center;gap:6px;color:#9aa6bd;text-decoration:none;font-size:14px;font-weight:500;transition:color .15s}
+.nav-back:hover{color:#e8edf7}
+
+/* ── Layout ── */
+.page{max-width:720px;margin:0 auto;padding:48px 24px 80px}
+.page-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.page-sub{font-size:15px;color:#9aa6bd;margin-bottom:48px}
+
+/* ── Card ── */
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:28px}
+.card+.card{margin-top:16px}
+.card-label{font-size:12px;font-family:'JetBrains Mono',monospace;color:#6b7a99;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+
+/* ── Duration picker ── */
+.duration-grid{display:flex;flex-wrap:wrap;gap:8px}
+.dur-btn{flex:1;min-width:80px;padding:12px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#9aa6bd;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.dur-btn:hover{border-color:rgba(59,130,246,.5);color:#e8edf7}
+.dur-btn.active{background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(34,211,238,.15));border-color:#3b82f6;color:#e8edf7;box-shadow:0 0 0 1px rgba(59,130,246,.3)}
+
+/* ── Date tabs ── */
+.date-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.date-scroll::-webkit-scrollbar{display:none}
+.date-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#9aa6bd;font-family:'Space Grotesk',sans-serif;cursor:pointer;transition:all .15s}
+.date-btn:hover{border-color:rgba(59,130,246,.4);color:#e8edf7}
+.date-btn.active{background:rgba(59,130,246,.15);border-color:#3b82f6;color:#e8edf7}
+.date-btn .weekday{font-size:11px;font-family:'JetBrains Mono',monospace;opacity:.7}
+.date-btn .day{font-size:18px;font-weight:700}
+.date-btn .month{font-size:11px;font-family:'JetBrains Mono',monospace;opacity:.6}
+
+/* ── Time grid ── */
+.time-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.time-btn{padding:11px 8px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#9aa6bd;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
+.time-btn:hover{border-color:rgba(34,211,238,.5);color:#e8edf7}
+.time-btn.active{background:rgba(34,211,238,.15);border-color:#22d3ee;color:#e8edf7}
+.no-slots{color:#6b7a99;font-size:14px;padding:8px 0}
+
+/* ── Form ── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.form-group:last-of-type{margin-bottom:0}
+.form-label{font-size:13px;font-weight:600;color:#aeb9cf}
+.form-input,.form-textarea{padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8edf7;font-size:15px;font-family:'Noto Sans TC','Space Grotesk',sans-serif;outline:none;transition:border-color .15s;width:100%}
+.form-input:focus,.form-textarea:focus{border-color:#3b82f6}
+.form-input::placeholder,.form-textarea::placeholder{color:#4a5568}
+.form-textarea{resize:vertical;min-height:80px}
+
+/* ── Summary strip ── */
+.summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:10px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);margin-bottom:24px;font-size:13px}
+.summary-item{display:flex;align-items:center;gap:6px;color:#9aa6bd}
+.summary-item strong{color:#e8edf7;font-family:'JetBrains Mono',monospace}
+.summary-dot{width:4px;height:4px;border-radius:99px;background:#6b7a99}
+
+/* ── Buttons ── */
+.btn-row{display:flex;gap:12px;margin-top:24px}
+.btn{padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;border:none;font-family:'Space Grotesk',sans-serif}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#22d3ee);color:#06121f}
+.btn-primary:hover{opacity:.9;box-shadow:0 8px 24px rgba(34,211,238,.2)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.btn-ghost{background:rgba(255,255,255,.06);color:#9aa6bd;border:1px solid rgba(255,255,255,.1)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#e8edf7}
+
+/* ── States ── */
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.08);border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state-center{display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 24px;text-align:center}
+.state-icon{font-size:48px;line-height:1}
+.state-title{font-size:20px;font-weight:700}
+.state-sub{color:#9aa6bd;font-size:14px;line-height:1.7;max-width:360px}
+
+/* ── Success ── */
+.success-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);color:#22d3ee;font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:20px}
+.success-details{width:100%;max-width:400px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:20px;margin:16px 0;text-align:left}
+.success-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}
+.success-row:last-child{border-bottom:none}
+.success-row .key{color:#9aa6bd}
+.success-row .val{color:#e8edf7;font-weight:600;font-family:'JetBrains Mono',monospace;font-size:13px}
+
+/* ── Error banner ── */
+.error-banner{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#fca5a5;font-size:13px;line-height:1.6;margin-top:12px}
+
+/* ── Step indicator ── */
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:36px}
+.step-dot{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.12);transition:all .2s}
+.step-dot.active{background:#3b82f6;width:24px}
+.step-dot.done{background:rgba(59,130,246,.4)}
+
+/* ── Setup notice ── */
+.setup-notice{padding:24px;border-radius:12px;border:1px solid rgba(245,158,11,.25);background:rgba(245,158,11,.06);font-size:13px;line-height:1.8}
+.setup-notice h3{color:#f59e0b;margin-bottom:8px;font-size:15px}
+.setup-notice code{font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-size:12px}
+.setup-notice ol{padding-left:18px;color:#9aa6bd;margin-top:8px}
+.setup-notice li{margin-bottom:4px}
+
+@media(max-width:600px){
+  .nav{padding:14px 20px}
+  .page{padding:32px 16px 60px}
+  .card{padding:20px}
+  .btn-row{flex-direction:column}
+  .btn-row .btn{width:100%;justify-content:center;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a class="nav-logo" href="../">
+    <span class="nav-logo-icon">&gt;_</span>
+    <span class="nav-logo-text">Reena Tsai</span>
+  </a>
+  <a class="nav-back" href="../">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    回到首頁
+  </a>
+</nav>
+
+<div class="page">
+  <h1 class="page-title">預約課程</h1>
+  <p class="page-sub">選擇時長與時段，完成後 Google Calendar 邀請將自動寄出。</p>
+
+  <!-- ── Screen: Loading ── -->
+  <div id="screen-loading">
+    <div class="state-center">
+      <div class="spinner"></div>
+      <p style="color:#9aa6bd;font-size:14px">正在載入可預約時段…</p>
+    </div>
+  </div>
+
+  <!-- ── Screen: Error ── -->
+  <div id="screen-error" style="display:none">
+    <div class="state-center">
+      <div class="state-icon">⚠️</div>
+      <div class="state-title">載入失敗</div>
+      <p class="state-sub" id="error-msg">無法取得可預約時段，請稍後再試。</p>
+      <button class="btn btn-ghost" onclick="loadSlots()">重試</button>
+    </div>
+  </div>
+
+  <!-- ── Screen: Not configured ── -->
+  <div id="screen-setup" style="display:none">
+    <div class="setup-notice">
+      <h3>⚙️ 尚未設定 Google Apps Script</h3>
+      <p style="color:#9aa6bd">請先完成 GAS 設定，再把網頁應用程式 URL 填入 <code>booking/index.html</code> 的 <code>GAS_URL</code> 變數。</p>
+      <ol>
+        <li>開啟 <a href="https://script.google.com" target="_blank" rel="noopener" style="color:#f59e0b">script.google.com</a> → 新增專案</li>
+        <li>貼上 <code>booking/Code.gs</code> 的內容，填入你的行事曆 ID</li>
+        <li>專案設定 → 時區：<code>亞洲/台北</code></li>
+        <li>部署 → 網頁應用程式 → 執行身份：我，存取權：所有人</li>
+        <li>複製 URL，取代本檔案頂端的 <code>GAS_URL</code> 值</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ── Screen: Select (step 1) ── -->
+  <div id="screen-select" style="display:none">
+    <div class="steps">
+      <div class="step-dot active" id="dot-0"></div>
+      <div class="step-dot" id="dot-1"></div>
+    </div>
+
+    <!-- Duration -->
+    <div class="card">
+      <div class="card-label">上課時長</div>
+      <div class="duration-grid" id="duration-grid"></div>
+    </div>
+
+    <!-- Dates -->
+    <div class="card" id="dates-card" style="display:none">
+      <div class="card-label">選擇日期</div>
+      <div class="date-scroll" id="date-scroll"></div>
+    </div>
+
+    <!-- Times -->
+    <div class="card" id="times-card" style="display:none">
+      <div class="card-label">選擇時段</div>
+      <div class="time-grid" id="time-grid"></div>
+    </div>
+
+    <div class="btn-row" id="select-next-row" style="display:none">
+      <button class="btn btn-primary" onclick="goToForm()">填寫資料 →</button>
+    </div>
+  </div>
+
+  <!-- ── Screen: Form (step 2) ── -->
+  <div id="screen-form" style="display:none">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active" style="width:24px"></div>
+    </div>
+
+    <div class="summary" id="booking-summary"></div>
+
+    <div class="card">
+      <div class="card-label">填寫資料</div>
+      <div class="form-group">
+        <label class="form-label" for="f-name">姓名 <span style="color:#f87171">*</span></label>
+        <input class="form-input" id="f-name" type="text" placeholder="你的名字" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-email">Email <span style="color:#f87171">*</span></label>
+        <input class="form-input" id="f-email" type="email" placeholder="email@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-topic">上課主題 / 備註</label>
+        <textarea class="form-textarea" id="f-topic" placeholder="想學什麼、目前程度、有什麼問題…（選填）"></textarea>
+      </div>
+      <div id="form-error" style="display:none" class="error-banner">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="form-error-msg"></span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToSelect()">← 返回</button>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitBooking()">確認送出</button>
+    </div>
+  </div>
+
+  <!-- ── Screen: Submitting ── -->
+  <div id="screen-submitting" style="display:none">
+    <div class="state-center">
+      <div class="spinner"></div>
+      <p style="color:#9aa6bd;font-size:14px">正在建立預約…</p>
+    </div>
+  </div>
+
+  <!-- ── Screen: Success ── -->
+  <div id="screen-success" style="display:none">
+    <div class="state-center">
+      <div class="success-badge">✓ 預約成功</div>
+      <div class="state-title">已送出！</div>
+      <p class="state-sub">Google Calendar 邀請將寄送至你的 Email，請確認信件。</p>
+      <div class="success-details" id="success-details"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <button class="btn btn-ghost" onclick="resetBooking()">再預約一次</button>
+        <a class="btn btn-ghost" href="../" style="display:inline-block;text-decoration:none">回到首頁</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 狀態 ─────────────────────────────────────────────────────
+let GAS_URL = null;
+
+const state = {
+  slots: [],        // [{date:'YYYY-MM-DD', slots:['HH:MM',...]}, ...]
+  duration: null,   // 分鐘數
+  date: null,       // 'YYYY-MM-DD'
+  time: null,       // 'HH:MM'
+};
+
+const DURATIONS = [
+  { label: '1 小時',   mins: 60  },
+  { label: '1.5 小時', mins: 90  },
+  { label: '2 小時',   mins: 120 },
+  { label: '2.5 小時', mins: 150 },
+  { label: '3 小時',   mins: 180 },
+];
+
+// ── 畫面控制 ─────────────────────────────────────────────────
+function show(id) {
+  ['loading','error','setup','select','form','submitting','success']
+    .forEach(s => {
+      const el = document.getElementById('screen-' + s);
+      if (el) el.style.display = s === id ? '' : 'none';
+    });
+}
+
+// ── 初始化 ───────────────────────────────────────────────────
+function init() {
+  fetch('../course-content/config.json')
+    .then(r => r.json())
+    .then(cfg => {
+      if (!cfg.gasUrl) { show('setup'); return; }
+      GAS_URL = cfg.gasUrl;
+      buildDurationGrid();
+      loadSlots();
+    })
+    .catch(() => { show('setup'); });
+}
+
+// ── 讀取時段 ─────────────────────────────────────────────────
+function loadSlots() {
+  show('loading');
+  fetch(GAS_URL + '?action=slots', { redirect: 'follow' })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) throw new Error(data.error || 'server error');
+      state.slots = data.slots || [];
+      show('select');
+      renderDates();
+    })
+    .catch(err => {
+      document.getElementById('error-msg').textContent =
+        '無法取得可預約時段：' + err.message;
+      show('error');
+    });
+}
+
+// ── Duration picker ──────────────────────────────────────────
+function buildDurationGrid() {
+  const grid = document.getElementById('duration-grid');
+  grid.innerHTML = '';
+  DURATIONS.forEach(({ label, mins }) => {
+    const btn = document.createElement('button');
+    btn.className = 'dur-btn';
+    btn.textContent = label;
+    btn.onclick = () => selectDuration(mins);
+    grid.appendChild(btn);
+  });
+}
+
+function selectDuration(mins) {
+  state.duration = mins;
+  state.date = null;
+  state.time = null;
+
+  document.querySelectorAll('.dur-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', DURATIONS[i].mins === mins);
+  });
+
+  renderDates();
+  document.getElementById('times-card').style.display = 'none';
+  document.getElementById('select-next-row').style.display = 'none';
+}
+
+// ── 日期清單 ─────────────────────────────────────────────────
+function validStartsForDate(dateObj) {
+  if (!state.duration) return [];
+  return validStarts(dateObj.slots, state.duration);
+}
+
+function renderDates() {
+  if (!state.duration) return;
+
+  const scroll = document.getElementById('date-scroll');
+  scroll.innerHTML = '';
+
+  const available = state.slots.filter(d => validStartsForDate(d).length > 0);
+
+  if (available.length === 0) {
+    scroll.innerHTML = '<p class="no-slots">這個時長目前沒有可預約的時段，請選擇其他時長。</p>';
+    document.getElementById('dates-card').style.display = '';
+    document.getElementById('times-card').style.display = 'none';
+    return;
+  }
+
+  available.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'date-btn';
+    btn.innerHTML = formatDateBtn(d.date);
+    btn.onclick = () => selectDate(d.date);
+    scroll.appendChild(btn);
+  });
+
+  document.getElementById('dates-card').style.display = '';
+
+  // 若先前選的 date 仍有效，保留選取
+  if (state.date && available.find(d => d.date === state.date)) {
+    renderTimes(state.date);
+    highlightDate(state.date);
+  } else {
+    state.date = null;
+    document.getElementById('times-card').style.display = 'none';
+  }
+}
+
+function selectDate(dateStr) {
+  state.date = dateStr;
+  state.time = null;
+  highlightDate(dateStr);
+  renderTimes(dateStr);
+  document.getElementById('select-next-row').style.display = 'none';
+}
+
+function highlightDate(dateStr) {
+  document.querySelectorAll('.date-btn').forEach((btn, i) => {
+    const available = state.slots.filter(d => validStartsForDate(d).length > 0);
+    btn.classList.toggle('active', available[i]?.date === dateStr);
+  });
+}
+
+function formatDateBtn(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((date - today) / 86400000);
+  const wd = ['日','一','二','三','四','五','六'][date.getDay()];
+  const mo = date.getMonth() + 1;
+  const d = date.getDate();
+  const label = diff === 0 ? '今天' : diff === 1 ? '明天' : `週${wd}`;
+  return `<span class="weekday">${label}</span><span class="day">${d}</span><span class="month">${mo} 月</span>`;
+}
+
+// ── 時段 grid ────────────────────────────────────────────────
+function renderTimes(dateStr) {
+  const dateObj = state.slots.find(d => d.date === dateStr);
+  if (!dateObj) return;
+
+  const starts = validStartsForDate(dateObj);
+  const grid = document.getElementById('time-grid');
+  grid.innerHTML = '';
+
+  if (starts.length === 0) {
+    grid.innerHTML = '<p class="no-slots">此日期已沒有符合時長的連續空檔。</p>';
+    document.getElementById('times-card').style.display = '';
+    return;
+  }
+
+  starts.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'time-btn';
+    btn.textContent = t;
+    btn.onclick = () => selectTime(t);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('times-card').style.display = '';
+
+  if (state.time && starts.includes(state.time)) {
+    highlightTime(state.time);
+  }
+}
+
+function selectTime(timeStr) {
+  state.time = timeStr;
+  highlightTime(timeStr);
+  document.getElementById('select-next-row').style.display = '';
+}
+
+function highlightTime(timeStr) {
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === timeStr);
+  });
+}
+
+// ── 時段驗證邏輯 ─────────────────────────────────────────────
+function addMins(timeStr, mins) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+}
+
+function validStarts(slots, durationMins) {
+  const needed = durationMins / 30;
+  return slots.filter((slot, i) => {
+    if (i + needed > slots.length) return false;
+    for (let k = 1; k < needed; k++) {
+      if (slots[i + k] !== addMins(slot, k * 30)) return false;
+    }
+    return true;
+  });
+}
+
+// ── 畫面切換 ─────────────────────────────────────────────────
+function goToForm() {
+  if (!state.duration || !state.date || !state.time) return;
+  updateSummary();
+  document.getElementById('form-error').style.display = 'none';
+  show('form');
+}
+
+function goToSelect() {
+  show('select');
+}
+
+function updateSummary() {
+  const d = new Date(state.date + 'T00:00:00');
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  const dateLabel = `${d.getMonth()+1}/${d.getDate()}（週${wd}）`;
+  const durLabel = DURATIONS.find(x => x.mins === state.duration)?.label ?? '';
+  const endTime = addMins(state.time, state.duration);
+
+  document.getElementById('booking-summary').innerHTML = `
+    <span class="summary-item">📅 <strong>${dateLabel}</strong></span>
+    <span class="summary-dot"></span>
+    <span class="summary-item">🕐 <strong>${state.time} – ${endTime}</strong></span>
+    <span class="summary-dot"></span>
+    <span class="summary-item">⏱ <strong>${durLabel}</strong></span>
+  `;
+}
+
+// ── 送出預約 ─────────────────────────────────────────────────
+function submitBooking() {
+  const name  = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const topic = document.getElementById('f-topic').value.trim();
+
+  if (!name) { showFormError('請填寫姓名。'); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showFormError('請填寫有效的 Email 地址。'); return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  show('submitting');
+
+  const body = new URLSearchParams({
+    date: state.date,
+    time: state.time,
+    durationMins: String(state.duration),
+    name,
+    email,
+    topic,
+  });
+
+  fetch(GAS_URL, { method: 'POST', body, redirect: 'follow' })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        if (data.error === 'conflict') throw new Error('此時段剛被預約，請重新選擇時間。');
+        throw new Error(data.error || '伺服器錯誤');
+      }
+      showSuccess(name, email);
+    })
+    .catch(err => {
+      btn.disabled = false;
+      show('form');
+      showFormError(err.message || '送出失敗，請稍後再試。');
+    });
+}
+
+function showFormError(msg) {
+  const el = document.getElementById('form-error');
+  document.getElementById('form-error-msg').textContent = msg;
+  el.style.display = 'flex';
+}
+
+// ── 成功畫面 ─────────────────────────────────────────────────
+function showSuccess(name, email) {
+  const d = new Date(state.date + 'T00:00:00');
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  const dateLabel = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}（週${wd}）`;
+  const durLabel = DURATIONS.find(x => x.mins === state.duration)?.label ?? '';
+  const endTime = addMins(state.time, state.duration);
+
+  document.getElementById('success-details').innerHTML = `
+    <div class="success-row"><span class="key">日期</span><span class="val">${dateLabel}</span></div>
+    <div class="success-row"><span class="key">時間</span><span class="val">${state.time} – ${endTime}</span></div>
+    <div class="success-row"><span class="key">時長</span><span class="val">${durLabel}</span></div>
+    <div class="success-row"><span class="key">姓名</span><span class="val">${escHtml(name)}</span></div>
+    <div class="success-row"><span class="key">通知寄至</span><span class="val" style="font-size:12px;word-break:break-all">${escHtml(email)}</span></div>
+  `;
+  show('success');
+}
+
+function resetBooking() {
+  state.duration = null;
+  state.date = null;
+  state.time = null;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('times-card').style.display = 'none';
+  document.getElementById('dates-card').style.display = 'none';
+  document.getElementById('select-next-row').style.display = 'none';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-email').value = '';
+  document.getElementById('f-topic').value = '';
+  show('select');
+  loadSlots();
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── 啟動 ─────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
