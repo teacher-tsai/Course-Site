@@ -16,6 +16,10 @@
 - 禁止 force push 到 `master`
 - 禁止刪除 `master`
 - PR merge 到 `master` 前需要 `tested-on-dev` check 通過
+- 所有改動必須從 feature branch 開始，**不可直接在 `dev` 或 `master` 上開發**
+- Feature branch 必須從 `master` 開，不可從 `dev` 或其他 branch 開
+- `dev` 可以直接 merge feature branch（不需要 PR），是測試用的 staging 環境
+- `master` 只能透過 PR merge，不可直接 push
 
 ## Deploy & Test 流程
 
@@ -35,7 +39,7 @@ feature branch → dev（測試）→ feature branch PR → master
 | Job | 觸發 | Required | 用途 |
 |-----|------|----------|------|
 | `tested-on-dev` | PR → master | 是 | 確認 commit 已 merge 進 dev 測試過 |
-| `submodule-check` | master / dev push | 否 | 驗證 submodule 正常 |
+| `submodule-check` | push (master/dev) + PR → master | 否 | 驗證 submodule 正常 |
 | `test-on-dev` | dev push only | 否 | 標記此 commit 在 dev 上 |
 | `deploy` | master push | 否 | 部署到根目錄 `/` |
 | `deploy-dev` | dev push | 否 | 部署到 `/dev/` 子目錄 |
