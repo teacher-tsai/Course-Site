@@ -58,31 +58,24 @@
   ],
   "plans": [
     {
-      "name": "Single Stage",
-      "tagline": "Start with one level",
-      "price": "Ask",
-      "unit": "/ stage",
-      "featured": false,
-      "features": ["One full level", "Homework & feedback", "Flexible schedule"],
-      "cta": "Inquire"
-    },
-    {
-      "name": "Full Track",
-      "tagline": "Basics to project",
-      "price": "Deal",
-      "unit": "/ bundle",
-      "featured": true,
-      "features": ["Level 1 → 3 complete", "Project & portfolio", "1-on-1 teaching", "Progress tracking"],
-      "cta": "Book a call"
-    },
-    {
-      "name": "Custom 1-on-1",
-      "tagline": "Tailored to your goals",
+      "name": "Private Class",
+      "tagline": "Fully 1-on-1, built around your goals and pace",
       "price": "Custom",
       "unit": "/ plan",
+      "featured": true,
+      "features": ["Fully 1-on-1 teaching", "Built around your level & goals", "Fully flexible timing", "Progress tracking", "Interview / exam prep"],
+      "cta": "Book a consultation",
+      "ctaUrl": "/Course-Site/consult/"
+    },
+    {
+      "name": "Group Class",
+      "tagline": "Learn with peers on a structured weekly schedule",
+      "price": "Ask",
+      "unit": "/ person",
       "featured": false,
-      "features": ["Built around your level", "Fully flexible timing", "Interview / exam prep"],
-      "cta": "Discuss"
+      "features": ["2–4 students per class", "One full level per course", "Homework & feedback", "Fixed weekly schedule"],
+      "cta": "Learn more",
+      "ctaUrl": "/Course-Site/consult/"
     }
   ],
   "faqs": [

@@ -254,7 +254,7 @@
       <h2 style="font-family:'Space Grotesk','Noto Sans TC',sans-serif;font-weight:700;font-size:clamp(30px,4vw,46px);letter-spacing:-.5px">{{ priceTitle }}</h2>
       <p style="color:#9aa6bd;font-size:16px;margin-top:14px">{{ priceSub }}</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:780px;margin:0 auto">
       <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
         <div style="{{ p.cardStyle }}">
           <sc-if value="{{ p.featured }}" hint-placeholder-val="{{ true }}">
@@ -273,7 +273,7 @@
               </div>
             </sc-for>
           </div>
-          <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="{{ p.btnStyle }}">{{ p.cta }}</a>
+          <a href="{{ p.ctaUrl }}" style="{{ p.btnStyle }}">{{ p.cta }}</a>
         </div>
       </sc-for>
     </div>
