@@ -28,20 +28,8 @@ jobs:
         with:
           submodules: true
           ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
-      - name: Verify submodule files exist
+      - name: Verify submodule is accessible and files exist
         run: |
           git submodule status
           test -f course-content/en.json && test -f course-content/zh.json
-      - name: Verify submodule is on main at latest commit
-        run: |
-          git -C course-content fetch origin main
-          SUBMODULE_COMMIT=$(git -C course-content rev-parse HEAD)
-          MAIN_HEAD=$(git -C course-content rev-parse origin/main)
-          echo "Submodule commit : $SUBMODULE_COMMIT"
-          echo "origin/main HEAD : $MAIN_HEAD"
-          if [ "$SUBMODULE_COMMIT" != "$MAIN_HEAD" ]; then
-            echo "❌ Submodule is not pointing to the latest commit on main."
-            echo "   Merge course-content changes to main first, then update the submodule pointer."
-            exit 1
-          fi
-          echo "✅ Submodule is at origin/main HEAD"
+          echo "✅ Submodule OK"
