@@ -21,6 +21,14 @@ jobs:
   sync-submodule:
     runs-on: ubuntu-latest
     steps:
+      # 1. 🔍 產生能繞過保護分支限制的特權 Token
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -35,7 +43,7 @@ jobs:
       - name: Sync submodule to matching branch
         env:
           SSH_KEY: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }} # 🔍 2. 將原本的 GITHUB_TOKEN 替換為特權 App Token
         run: |
           # SSH key for reading private submodule
           mkdir -p ~/.ssh
@@ -58,7 +66,7 @@ jobs:
           else
             git add course-content
             git commit -m "chore: sync submodule to course-content/$TARGET [skip ci]"
-            # Push via HTTPS + GITHUB_TOKEN (SUBMODULE_DEPLOY_KEY has no write access here)
+            # Push via HTTPS + 特權 App Token
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
             git push
           fi
