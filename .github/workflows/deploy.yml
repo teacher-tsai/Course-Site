@@ -23,7 +23,15 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Sync submodule to matching branch
+        env:
+          SSH_KEY: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
         run: |
+          # Set up SSH for submodule access
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/submodule_key
+          chmod 600 ~/.ssh/submodule_key
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/submodule_key -o StrictHostKeyChecking=no"
+
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             TARGET="main"
           else
