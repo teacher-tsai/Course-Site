@@ -3,6 +3,16 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master, dev]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'master'
+        type: choice
+        options:
+          - master
+          - dev
 
 permissions:
   contents: write
@@ -33,7 +43,8 @@ jobs:
           chmod 600 ~/.ssh/submodule_key
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/submodule_key -o StrictHostKeyChecking=no"
 
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+          DEPLOY_TARGET="${{ inputs.target || (github.ref == 'refs/heads/master' && 'master' || 'dev') }}"
+          if [ "$DEPLOY_TARGET" = "master" ]; then
             TARGET="main"
           else
             TARGET="dev"
@@ -53,14 +64,14 @@ jobs:
           fi
 
   test-on-dev:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev' || (github.event_name == 'workflow_dispatch' && inputs.target == 'dev')
     runs-on: ubuntu-latest
     steps:
       - name: Confirm commit is on dev branch
         run: echo "OK"
 
   deploy:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.target == 'master')
     needs: [sync-submodule]
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +89,7 @@ jobs:
           keep_files: true
 
   deploy-dev:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev' || (github.event_name == 'workflow_dispatch' && inputs.target == 'dev')
     needs: [sync-submodule]
     runs-on: ubuntu-latest
     steps:
