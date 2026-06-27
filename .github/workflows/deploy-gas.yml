@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - booking/Code.gs
+  workflow_dispatch:
 
 jobs:
   deploy-gas:
