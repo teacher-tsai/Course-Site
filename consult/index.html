@@ -171,62 +171,16 @@ body{background:#070b14;color:#e8edf7;font-family:'Noto Sans TC','Space Grotesk'
   <!-- PATH A: 留言諮詢                       -->
   <!-- ══════════════════════════════════════ -->
 
-  <!-- ── Screen: Form ── -->
-  <div id="screen-form" style="display:none">
-    <div class="card">
-      <div class="card-label">留言諮詢</div>
-      <div class="form-group">
-        <label class="form-label" for="f-name">姓名 <span style="color:#f87171">*</span></label>
-        <input class="form-input" id="f-name" type="text" placeholder="你的名字" required autocomplete="name">
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="f-email">Email <span style="color:#f87171">*</span></label>
-        <input class="form-input" id="f-email" type="email" placeholder="email@example.com" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="f-course">感興趣的課程</label>
-        <select class="form-select" id="f-course">
-          <option value="">（選填）</option>
-          <option value="Python">Python</option>
-          <option value="Java">Java</option>
-          <option value="都有興趣">都有興趣</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label" for="f-message">問題或備註</label>
-        <textarea class="form-textarea" id="f-message" placeholder="想了解的方向、目前程度、有什麼問題…（選填）"></textarea>
-      </div>
-      <div id="form-error" style="display:none" class="error-banner">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="form-error-msg"></span>
-      </div>
-    </div>
-
-    <div class="btn-row">
+  <!-- ── Screen: Form embed ── -->
+  <div id="screen-form-embed" style="display:none">
+    <div class="btn-row" style="margin-top:0;margin-bottom:20px">
       <button class="btn btn-ghost" onclick="goToChoice()">← 返回</button>
-      <button class="btn btn-primary" id="form-submit-btn" onclick="submitForm()">送出留言</button>
     </div>
-  </div>
-
-  <!-- ── Screen: Form submitting ── -->
-  <div id="screen-form-submitting" style="display:none">
-    <div class="state-center">
-      <div class="spinner"></div>
-      <p style="color:#9aa6bd;font-size:14px">正在送出留言…</p>
-    </div>
-  </div>
-
-  <!-- ── Screen: Form success ── -->
-  <div id="screen-form-success" style="display:none">
-    <div class="state-center">
-      <div class="success-badge">✓ 留言已送出</div>
-      <div class="state-title">謝謝！</div>
-      <p class="state-sub">老師已收到你的留言，會盡快透過 Email 與你聯繫。</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
-        <button class="btn btn-ghost" onclick="resetAll()">再送一則</button>
-        <a class="btn btn-ghost" href="../" style="display:inline-block;text-decoration:none">回到首頁</a>
-      </div>
-    </div>
+    <iframe id="consult-form-iframe" src="" width="100%" height="640"
+      frameborder="0" marginheight="0" marginwidth="0"
+      style="border-radius:12px;background:#fff;display:block">
+      載入中…
+    </iframe>
   </div>
 
   <!-- ══════════════════════════════════════ -->
@@ -345,6 +299,7 @@ body{background:#070b14;color:#e8edf7;font-family:'Noto Sans TC','Space Grotesk'
 
 <script>
 let GAS_URL = null;
+let CONSULT_FORM_URL = null;
 
 const slotState = {
   slots: [],   // [{date:'YYYY-MM-DD', slots:['HH:MM',...]}, ...]
@@ -354,7 +309,7 @@ const slotState = {
 
 const ALL_SCREENS = [
   'setup','choice',
-  'form','form-submitting','form-success',
+  'form-embed',
   'slot-loading','slot-error','slot-select','slot-form','slot-submitting','slot-success',
 ];
 
@@ -372,6 +327,7 @@ function init() {
     .then(cfg => {
       if (!cfg.gasUrl) { show('setup'); return; }
       GAS_URL = cfg.gasUrl;
+      CONSULT_FORM_URL = cfg.consultFormUrl || null;
       show('choice');
     })
     .catch(() => { show('setup'); });
@@ -385,10 +341,6 @@ function resetAll() {
   slotState.slots = [];
   slotState.date = null;
   slotState.time = null;
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-email').value = '';
-  document.getElementById('f-course').value = '';
-  document.getElementById('f-message').value = '';
   document.getElementById('sf-name').value = '';
   document.getElementById('sf-email').value = '';
   document.getElementById('sf-course').value = '';
@@ -400,43 +352,8 @@ function resetAll() {
 // ══════════════════════════════════════════════════════════
 
 function startForm() {
-  document.getElementById('form-error').style.display = 'none';
-  show('form');
-}
-
-function submitForm() {
-  const name    = document.getElementById('f-name').value.trim();
-  const email   = document.getElementById('f-email').value.trim();
-  const course  = document.getElementById('f-course').value;
-  const message = document.getElementById('f-message').value.trim();
-
-  if (!name) { showFormError('請填寫姓名。'); return; }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showFormError('請填寫有效的 Email 地址。'); return;
-  }
-
-  document.getElementById('form-submit-btn').disabled = true;
-  show('form-submitting');
-
-  const body = new URLSearchParams({ type: 'consult-form', name, email, course, message });
-
-  fetch(GAS_URL, { method: 'POST', body, redirect: 'follow' })
-    .then(r => r.json())
-    .then(data => {
-      if (!data.ok) throw new Error(data.error || '伺服器錯誤');
-      show('form-success');
-    })
-    .catch(err => {
-      document.getElementById('form-submit-btn').disabled = false;
-      show('form');
-      showFormError(err.message || '送出失敗，請稍後再試。');
-    });
-}
-
-function showFormError(msg) {
-  const el = document.getElementById('form-error');
-  document.getElementById('form-error-msg').textContent = msg;
-  el.style.display = 'flex';
+  document.getElementById('consult-form-iframe').src = CONSULT_FORM_URL + '?embedded=true';
+  show('form-embed');
 }
 
 // ══════════════════════════════════════════════════════════
