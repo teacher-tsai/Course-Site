@@ -56,13 +56,6 @@ function doGet(e) {
 function doPost(e) {
   try {
     const p = e.parameter;
-    if (p.type === 'consult-form') {
-      for (const k of ['name', 'email']) {
-        if (!p[k] || !String(p[k]).trim()) throw new Error('missing:' + k);
-      }
-      sendConsultEmail(p);
-      return respond({ ok: true });
-    }
     if (p.type === 'consult-slot') {
       for (const k of ['date', 'time', 'name', 'email']) {
         if (!p[k] || !String(p[k]).trim()) throw new Error('missing:' + k);
@@ -198,21 +191,6 @@ function createBooking({ date, time, durationMins, name, email, topic }) {
 }
 
 // ── 諮詢相關 ────────────────────────────────────────────────
-
-function sendConsultEmail({ name, email, course, message }) {
-  MailApp.sendEmail({
-    to: CONFIG.notifyEmail,
-    subject: `💬 諮詢留言 – ${name}`,
-    body: [
-      '有新的諮詢留言！',
-      '',
-      `姓名：${name}`,
-      `Email：${email}`,
-      `感興趣的課程：${course || '（未填寫）'}`,
-      `留言：${message || '（未填寫）'}`,
-    ].join('\n'),
-  });
-}
 
 function createConsultSlot({ date, time, name, email, course }) {
   const [h, m] = time.split(':').map(Number);
