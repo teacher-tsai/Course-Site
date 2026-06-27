@@ -17,10 +17,13 @@ jobs:
         with:
           node-version: '24'
 
-      - run: npm install -g @google/clasp
+      - run: npm install -g @google/clasp@3.3.0
 
       - name: Write clasp credentials
         run: echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
+
+      - name: Debug credentials format
+        run: cat ~/.clasprc.json | python3 -c "import sys,json; d=json.load(sys.stdin); print('keys:', list(d.keys()))"
 
       - name: Push
         working-directory: booking
