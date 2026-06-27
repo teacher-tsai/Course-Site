@@ -28,7 +28,8 @@ jobs:
         with:
           submodules: true
           ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
-      - name: Verify submodule
+      - name: Verify submodule is accessible and files exist
         run: |
           git submodule status
           test -f course-content/en.json && test -f course-content/zh.json
+          echo "✅ Submodule OK"

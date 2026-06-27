@@ -8,17 +8,49 @@ permissions:
   contents: write
 
 jobs:
-  submodule-check:
+  sync-submodule:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
           ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
-      - name: Verify submodule
+          fetch-depth: 0
+
+      - name: Configure git
         run: |
-          git submodule status
-          test -f course-content/en.json && test -f course-content/zh.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync submodule to matching branch
+        env:
+          SSH_KEY: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # SSH key for reading private submodule
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/submodule_key
+          chmod 600 ~/.ssh/submodule_key
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/submodule_key -o StrictHostKeyChecking=no"
+
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            TARGET="main"
+          else
+            TARGET="dev"
+          fi
+          echo "Syncing course-content to origin/$TARGET"
+          git -C course-content fetch origin $TARGET
+          git -C course-content checkout origin/$TARGET
+
+          if git diff --quiet course-content; then
+            echo "Submodule already up to date"
+          else
+            git add course-content
+            git commit -m "chore: sync submodule to course-content/$TARGET [skip ci]"
+            # Push via HTTPS + GITHUB_TOKEN (SUBMODULE_DEPLOY_KEY has no write access here)
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+            git push
+          fi
 
   test-on-dev:
     if: github.ref == 'refs/heads/dev'
@@ -29,12 +61,14 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/master'
+    needs: [sync-submodule]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
           ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
+          ref: master
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
@@ -45,12 +79,14 @@ jobs:
 
   deploy-dev:
     if: github.ref == 'refs/heads/dev'
+    needs: [sync-submodule]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
           ssh-key: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
+          ref: dev
 
       - name: Deploy to /dev/
         uses: peaceiris/actions-gh-pages@v4
