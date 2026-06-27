@@ -25,8 +25,9 @@ jobs:
       - name: Sync submodule to matching branch
         env:
           SSH_KEY: ${{ secrets.SUBMODULE_DEPLOY_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Set up SSH for submodule access
+          # SSH key for reading private submodule
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/submodule_key
           chmod 600 ~/.ssh/submodule_key
@@ -40,13 +41,14 @@ jobs:
           echo "Syncing course-content to origin/$TARGET"
           git -C course-content fetch origin $TARGET
           git -C course-content checkout origin/$TARGET
+
           if git diff --quiet course-content; then
             echo "Submodule already up to date"
           else
             git add course-content
             git commit -m "chore: sync submodule to course-content/$TARGET [skip ci]"
-            # Unset SSH override so git push uses GITHUB_TOKEN (set by actions/checkout)
-            unset GIT_SSH_COMMAND
+            # Push via HTTPS + GITHUB_TOKEN (SUBMODULE_DEPLOY_KEY has no write access here)
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
             git push
           fi
 
