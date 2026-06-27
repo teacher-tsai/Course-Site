@@ -17,7 +17,8 @@ const CONFIG = {
   // 其他曆的 ID 可在 Google Calendar → 設定 → 行事曆設定 → 整合行事曆 找到
   calendarIds: [
     'primary',
-    // 'xxxxxxxx@group.calendar.google.com',  // ← 把工作/教學曆 ID 填在這裡
+    '82ps86fvr1e2segjgdgia4l8epklej2p@import.calendar.google.com',
+    'reenatsai@gmail.com',  // ← 把工作/教學曆 ID 填在這裡
   ],
 
   // 可預約時間範圍（24h，以腳本時區為準）
@@ -34,6 +35,9 @@ const CONFIG = {
 
   // 預約事件要建立在哪個行事曆
   targetCalendarId: 'primary',
+
+  // 新預約時寄通知信給老師的 Email
+  notifyEmail: 'reena.tsai.swe@gmail.com',
 };
 
 // ── 對外端點 ─────────────────────────────────────────────────
@@ -138,6 +142,7 @@ function createBooking({ date, time, durationMins, name, email, topic }) {
     : CalendarApp.getCalendarById(CONFIG.targetCalendarId);
 
   const hrs = durationMins / 60;
+  const endTimeStr = fmtTime(endDate);
   cal.createEvent(
     `課程預約 – ${name}（${hrs}h）`,
     startDate,
@@ -154,6 +159,23 @@ function createBooking({ date, time, durationMins, name, email, topic }) {
       sendInvites: true,
     }
   );
+
+  MailApp.sendEmail({
+    to: CONFIG.notifyEmail,
+    subject: `📅 新課程預約 – ${name}（${hrs}h）`,
+    body: [
+      '有新的課程預約！',
+      '',
+      `學生：${name}`,
+      `Email：${email}`,
+      `日期：${date}`,
+      `時間：${time} – ${endTimeStr}`,
+      `時長：${hrs} 小時`,
+      `主題：${topic || '（未填寫）'}`,
+      '',
+      '行事曆事件已自動建立。',
+    ].join('\n'),
+  });
 }
 
 // ── 日期 / 時間工具 ──────────────────────────────────────────
