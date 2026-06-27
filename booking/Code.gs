@@ -44,7 +44,10 @@ const CONFIG = {
 
 function doGet(e) {
   try {
-    return respond({ ok: true, slots: getAvailableSlots() });
+    const cfg = (e && e.parameter && e.parameter.type === 'consult')
+      ? Object.assign({}, CONFIG, { slotMinutes: 10 })
+      : CONFIG;
+    return respond({ ok: true, slots: getAvailableSlots(cfg) });
   } catch (err) {
     return respond({ ok: false, error: err.message });
   }
@@ -53,6 +56,14 @@ function doGet(e) {
 function doPost(e) {
   try {
     const p = e.parameter;
+    if (p.type === 'consult-slot') {
+      for (const k of ['date', 'time', 'name', 'email']) {
+        if (!p[k] || !String(p[k]).trim()) throw new Error('missing:' + k);
+      }
+      createConsultSlot(p);
+      return respond({ ok: true });
+    }
+    // 原有課程預約
     for (const k of ['date', 'time', 'durationMins', 'name', 'email']) {
       if (!p[k] || !String(p[k]).trim()) throw new Error('missing:' + k);
     }
@@ -71,19 +82,20 @@ function respond(data) {
 
 // ── 空檔計算 ─────────────────────────────────────────────────
 
-function getAvailableSlots() {
+function getAvailableSlots(cfg) {
+  cfg = cfg || CONFIG;
   const now = new Date();
-  const minStart = new Date(now.getTime() + CONFIG.minLeadHours * 3600 * 1000);
-  const slotMs = CONFIG.slotMinutes * 60 * 1000;
+  const minStart = new Date(now.getTime() + cfg.minLeadHours * 3600 * 1000);
+  const slotMs = cfg.slotMinutes * 60 * 1000;
   const result = [];
 
-  for (let d = 0; d < CONFIG.bookingWindowDays; d++) {
+  for (let d = 0; d < cfg.bookingWindowDays; d++) {
     const day = new Date(now);
     day.setDate(day.getDate() + d);
 
     const dateStr = fmtDate(day);
-    const dayStart = makeLocalTime(dateStr, CONFIG.workingHours.start, 0);
-    const dayEnd   = makeLocalTime(dateStr, CONFIG.workingHours.end,   0);
+    const dayStart = makeLocalTime(dateStr, cfg.workingHours.start, 0);
+    const dayEnd   = makeLocalTime(dateStr, cfg.workingHours.end,   0);
 
     const busy = getBusyIntervals(dayStart, dayEnd);
     const free = [];
@@ -172,6 +184,55 @@ function createBooking({ date, time, durationMins, name, email, topic }) {
       `時間：${time} – ${endTimeStr}`,
       `時長：${hrs} 小時`,
       `主題：${topic || '（未填寫）'}`,
+      '',
+      '行事曆事件已自動建立。',
+    ].join('\n'),
+  });
+}
+
+// ── 諮詢相關 ────────────────────────────────────────────────
+
+function createConsultSlot({ date, time, name, email, course }) {
+  const [h, m] = time.split(':').map(Number);
+  const startDate = makeLocalTime(date, h, m);
+  const endDate   = new Date(startDate.getTime() + 10 * 60 * 1000);
+
+  const busy = getBusyIntervals(startDate, endDate);
+  if (overlaps(startDate, endDate, busy)) throw new Error('conflict');
+
+  const cal = CONFIG.targetCalendarId === 'primary'
+    ? CalendarApp.getDefaultCalendar()
+    : CalendarApp.getCalendarById(CONFIG.targetCalendarId);
+
+  const endTimeStr = fmtTime(endDate);
+  cal.createEvent(
+    `諮詢 – ${name}`,
+    startDate,
+    endDate,
+    {
+      description: [
+        `學生：${name}`,
+        `Email：${email}`,
+        `感興趣的課程：${course || '（未填寫）'}`,
+        '',
+        '此諮詢預約由課程網站自動建立。',
+      ].join('\n'),
+      guests: email,
+      sendInvites: true,
+    }
+  );
+
+  MailApp.sendEmail({
+    to: CONFIG.notifyEmail,
+    subject: `📅 新諮詢預約 – ${name}`,
+    body: [
+      '有新的諮詢時段預約！',
+      '',
+      `學生：${name}`,
+      `Email：${email}`,
+      `日期：${date}`,
+      `時間：${time} – ${endTimeStr}（10 分鐘）`,
+      `感興趣的課程：${course || '（未填寫）'}`,
       '',
       '行事曆事件已自動建立。',
     ].join('\n'),
