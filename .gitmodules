@@ -1,0 +1,3 @@
+[submodule "course-content"]
+	path = course-content
+	url = git@github.com:teacher-tsai/course-content.git
