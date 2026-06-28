@@ -15,15 +15,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
 
       - run: npm install -g @google/clasp@3.3.0
 
       - name: Write clasp credentials
-        run: echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
-
-      - name: Debug credentials format
-        run: cat ~/.clasprc.json | python3 -c "import sys,json; d=json.load(sys.stdin); print('keys:', list(d.keys()))"
+        env:
+          CLASP_CREDS: ${{ secrets.CLASP_CREDENTIALS }}
+        run: echo "$CLASP_CREDS" > ~/.clasprc.json
 
       - name: Push
         working-directory: booking
