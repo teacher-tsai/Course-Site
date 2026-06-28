@@ -25,7 +25,25 @@ jobs:
         run: echo "$CLASP_CREDS" > ~/.clasprc.json
 
       - name: Debug credentials format
-        run: cat ~/.clasprc.json | python3 -c "import sys,json; d=json.load(sys.stdin); print('keys:', list(d.keys()))"
+        run: |
+          cat ~/.clasprc.json | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          print('top keys:', list(d.keys()))
+          t = d.get('tokens', {})
+          print('token keys:', list(t.keys()))
+          print('has refresh_token:', 'refresh_token' in t)
+          "
+
+      - name: Test API access
+        env:
+          CLASP_CREDS: ${{ secrets.CLASP_CREDENTIALS }}
+        run: |
+          TOKEN=$(echo "$CLASP_CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['tokens']['access_token'])")
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://script.googleapis.com/v1/projects/1IlGwB6IT6l13yxn2KE5BAt8cxdXQ7WxAt3YtKIxyN66TdbJaaGtcSzjn/content")
+          echo "API HTTP status: $HTTP"
 
       - name: Push
         working-directory: booking
